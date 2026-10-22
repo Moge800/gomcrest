@@ -1,9 +1,11 @@
 name: CI
 
+# Pushes to main and pull requests into main. A push to a PR branch is
+# covered by its pull_request run, so branch pushes do not run CI twice.
 on:
   push:
     branches:
-      - "**"
+      - main
   pull_request:
     branches:
       - main
