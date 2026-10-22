@@ -1,5 +1,8 @@
 # gomcrest
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/moge800/gomcrest.svg)](https://pkg.go.dev/github.com/moge800/gomcrest)
+[![CI](https://github.com/Moge800/gomcrest/actions/workflows/ci.yml/badge.svg)](https://github.com/Moge800/gomcrest/actions/workflows/ci.yml)
+
 [日本語 README](README_jp.md)
 
 A Go client library for [gomc-rest](https://github.com/Moge800/gomc-rest), an MC protocol REST gateway for Mitsubishi PLCs. Standard library only, no external dependencies.
@@ -76,7 +79,9 @@ err = c.RandomWrite(ctx, gomcrest.RandomWriteRequest{
 })
 ```
 
-Each list holds up to 255 entries, and `Words` plus the bits of words in `Bits` (such as `D100.1`) also count together toward 255. `Bits` may hold at most 16 bit devices (such as `M0`), and each one costs a separate PLC read: read contiguous bits such as M0–M15 with `ReadBits(ctx, "M0", 16)` instead, and use `RandomRead` for scattered words and double words. Because the server may issue several PLC reads, the values are not guaranteed to come from one PLC scan; if they must be consistent, have the PLC program copy them into one contiguous block and read that. `RandomWrite` is not atomic: the server writes words and dwords, then bit devices, then bits of words (read-modify-write per word) as separate PLC operations. If one fails, the earlier ones stay written, so read the addresses back before resending.
+For `RandomRead`, each list holds up to 255 entries, and `Words` plus the bits of words in `Bits` (such as `D100.1`) also count together toward 255. `Bits` may hold at most 16 bit devices (such as `M0`), and each one costs a separate PLC read: read contiguous bits such as M0–M15 with `ReadBits(ctx, "M0", 16)` instead, and use `RandomRead` for scattered words and double words. Because the server may issue several PLC reads, the values are not guaranteed to come from one PLC scan; if they must be consistent, have the PLC program copy them into one contiguous block and read that.
+
+`RandomWrite` takes up to 255 entries per list. It is not atomic: the server writes words and dwords, then bit devices, then bits of words (read-modify-write per word) as separate PLC operations. If one fails, the earlier ones stay written, so read the addresses back before resending.
 
 ### K notation (gomc-rest v1.7.0+)
 
@@ -107,7 +112,7 @@ Test errors with `errors.Is`.
 | `ErrBadRequest` | bad parameter or address |
 | `ErrUnauthorized` | missing or wrong token (any 401) |
 | `ErrForbidden` | readonly, or remote control disabled |
-| `ErrPLC` | the PLC returned an end code (`APIError.EndCode`) |
+| `ErrPLC` | error from the PLC; its MC end code, if any, is in `APIError.EndCode` |
 | `ErrPLCConnection` | **gomc-rest → PLC** unreachable |
 | `ErrBusy` | server queue full, rejected at once (not run on the PLC) |
 | `ErrQueueClosed` | server shutting down (not run on the PLC) |
@@ -167,6 +172,8 @@ gofmt -l .
 go vet ./...
 go test -race ./...
 ```
+
+`-race` needs cgo (a C compiler); without one, run `go test ./...`. CI runs the tests with `-race` on Go 1.23 and the latest stable Go.
 
 Integration tests run against gomc-rest connected to a real PLC or GX Simulator, with the `integration` build tag. They are skipped unless `GOMCR_TEST_URL` is set.
 

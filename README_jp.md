@@ -1,5 +1,8 @@
 # gomcrest
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/moge800/gomcrest.svg)](https://pkg.go.dev/github.com/moge800/gomcrest)
+[![CI](https://github.com/Moge800/gomcrest/actions/workflows/ci.yml/badge.svg)](https://github.com/Moge800/gomcrest/actions/workflows/ci.yml)
+
 [English README](README.md)
 
 [gomc-rest](https://github.com/Moge800/gomc-rest)（三菱 PLC 向け MC プロトコル REST ゲートウェイ）の Go クライアントライブラリです。標準ライブラリのみで動き、外部依存はありません。
@@ -58,7 +61,7 @@ v, err := c.Read(ctx, addr, 4, gomcrest.Format{SInt: true})
 err = c.Write(ctx, addr, gomcrest.Values{Ints: []int64{-1, 2}}, gomcrest.Format{SInt: true})
 ```
 
-`Write` の `Values` は `Ints` と `Bools` のどちらか一方だけを入れます。両方空・両方あり の場合は送信せずに `ErrBadRequest` を返します。
+`Write` の `Values` は `Ints` と `Bools` のどちらか一方だけを入れます。両方空・両方ありの場合は送信せずに `ErrBadRequest` を返します。
 
 ### まとめ読み・まとめ書き
 
@@ -76,7 +79,9 @@ err = c.RandomWrite(ctx, gomcrest.RandomWriteRequest{
 })
 ```
 
-各リストは最大 255 件で、`Words` と `Bits` 内のワードのビット（`D100.1` など）は合わせて 255 件までです。`Bits` に入れられるビットデバイス（`M0` など）は 16 件までで、1 件ごとに PLC への読み出しが 1 回増えます。M0〜M15 のような連続したビットは `ReadBits(ctx, "M0", 16)` で読み、`RandomRead` は離れたワード・ダブルワードに使ってください。サーバ側で複数回の PLC 読み出しになることがあるため、値が同じスキャンの状態だとは限りません。値の整合が必要なら、PLC のプログラムで連続した領域にまとめてから読んでください。`RandomWrite` は不可分（アトミック）ではありません。サーバはワードとダブルワード、ビットデバイス、ワードのビット（ワードごとに読み出し・変更・書き込み）を、別々の PLC 操作として順に書き込みます。途中で失敗しても、それより前の書き込みは反映されたままなので、再送する前に対象のアドレスを読み直してください。
+`RandomRead` の各リストは最大 255 件で、`Words` と `Bits` 内のワードのビット（`D100.1` など）は合わせて 255 件までです。`Bits` に入れられるビットデバイス（`M0` など）は 16 件までで、1 件ごとに PLC への読み出しが 1 回増えます。M0〜M15 のような連続したビットは `ReadBits(ctx, "M0", 16)` で読み、`RandomRead` は離れたワード・ダブルワードに使ってください。サーバ側で複数回の PLC 読み出しになることがあるため、値が同じスキャンの状態だとは限りません。値の整合が必要なら、PLC のプログラムで連続した領域にまとめてから読んでください。
+
+`RandomWrite` は各リスト最大 255 件で、不可分（アトミック）ではありません。サーバはワードとダブルワード、ビットデバイス、ワードのビット（ワードごとに読み出し・変更・書き込み）を、別々の PLC 操作として順に書き込みます。途中で失敗しても、それより前の書き込みは反映されたままなので、再送する前に対象のアドレスを読み直してください。
 
 ### K 記法（gomc-rest v1.7.0 以降）
 
@@ -107,7 +112,7 @@ err = c.RemoteRun(ctx, gomcrest.RunOptions{Clear: gomcrest.ClearNone})
 | `ErrBadRequest` | パラメータ・アドレスの誤り |
 | `ErrUnauthorized` | トークンの不足・不一致（401 はすべてこれ） |
 | `ErrForbidden` | readonly、またはリモート操作が無効 |
-| `ErrPLC` | PLC が終了コードを返した（`APIError.EndCode`） |
+| `ErrPLC` | PLC 側のエラー（終了コードがあれば `APIError.EndCode` に入る） |
 | `ErrPLCConnection` | **gomc-rest → PLC** に届かない |
 | `ErrBusy` | サーバのキューが満杯で即拒否（PLC では未実行） |
 | `ErrQueueClosed` | サーバが終了処理中（PLC では未実行） |
@@ -167,6 +172,8 @@ gofmt -l .
 go vet ./...
 go test -race ./...
 ```
+
+`-race` には cgo（C コンパイラ）が必要です。無い環境では `go test ./...` を使ってください。CI では Go 1.23 と最新の stable で `-race` 付きのテストを実行しています。
 
 実機または GX Simulator につないだ gomc-rest に対する結合テストは、ビルドタグ `integration` で実行します。`GOMCR_TEST_URL` が未設定ならスキップされます。
 

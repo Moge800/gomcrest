@@ -1,0 +1,14 @@
+# Keeps the actions used by CI up to date. The module has no dependencies,
+# so only GitHub Actions is watched. Updates come as one grouped PR a week.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: chore
