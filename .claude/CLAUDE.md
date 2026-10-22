@@ -35,7 +35,8 @@
 | `integration_test.go` | `//go:build integration`の結合テスト |
 | `README.md` / `README_jp.md` | 利用者向けの説明。英日を同じ内容に保つ |
 | `.docs/` | Git管理外の作業メモ（`plan.md`、`decisions.md`、`versions.md`） |
-| `.github/workflows/ci.yml` | CI（Go 1.23 / stable） |
+| `.github/workflows/ci.yml` | CI（Go 1.23 / stable）。`main`へのpushと`main`宛てのPRで実行 |
+| `.github/dependabot.yml` | GitHub Actionsのバージョン更新（週1回、まとめて1件のPR） |
 
 - 新しいエンドポイントは用途ごとのファイルに置き、`do` / `get` / `post` / `read` / `write`を使う。HTTP処理を重複させない。
 - 利用者向けの変更はgodocと`README.md` / `README_jp.md`の両方に反映する。
