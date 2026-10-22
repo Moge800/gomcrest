@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        go: ["1.23", "stable"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+          cache: false # no dependencies, no go.sum
+
+      - name: Format
+        run: |
+          out=$(gofmt -l .)
+          if [ -n "$out" ]; then echo "$out"; exit 1; fi
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        run: go test -race ./...
+
+      # Compiles integration_test.go. Its tests skip because GOMCR_TEST_URL is
+      # unset: CI never talks to a PLC.
+      - name: Integration tests (compile only)
+        run: go test -tags integration ./...
